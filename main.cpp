@@ -1,5 +1,8 @@
 #include "Arduino.h"
 #include <Arduino_FreeRTOS.h>
+#include <Pixy2.h>  // Asegúrate de tener instalada la biblioteca Pixy2
+
+Pixy2 pixy;
 
 // Definición de los estados
 typedef enum {
@@ -43,12 +46,14 @@ void stateMachineTask(void *pvParameters);
 void setup() {
     Serial.begin(9600); // Inicializar comunicación serial para depuración
 
-    xTaskCreate(stateMachineTask, "StateMachine", 1000, NULL, 1, &Task_Handle_1);
-    xTaskCreate(configTask, "Configuracion", 1000, NULL, 1, &Task_Handle_2);
-    xTaskCreate(motorsTask, "Desplazamiento", 1000, NULL, 1, &Task_Handle_3);
-    xTaskCreate(sensColorTask, "RGB", 1000, NULL, 1, &Task_Handle_4);
-    xTaskCreate(gripperTask, "Agarre", 1000, NULL, 1, &Task_Handle_5);
-    xTaskCreate(camTask, "Camara", 1000, NULL, 1, &Task_Handle_6);
+    pixy.init(); // Inicializar Pixy Cam
+
+    xTaskCreate(stateMachineTask, "StateMachine", 2048, NULL, 1, &Task_Handle_1);
+    xTaskCreate(configTask, "Configuracion", 2048, NULL, 1, &Task_Handle_2);
+    xTaskCreate(motorsTask, "Desplazamiento", 2048, NULL, 1, &Task_Handle_3);
+    xTaskCreate(sensColorTask, "RGB", 2048, NULL, 1, &Task_Handle_4);
+    xTaskCreate(gripperTask, "Agarre", 2048, NULL, 1, &Task_Handle_5);
+    xTaskCreate(camTask, "Camara", 2048, NULL, 1, &Task_Handle_6);
 
     // Inicialmente suspender todas las tareas excepto la de la máquina de estados
     vTaskSuspend(Task_Handle_2);
@@ -224,7 +229,13 @@ void camTask(void *pvParameters) {
     (void) pvParameters;
 
     for (;;) {
-        // Código de cámara
+        // Código de la cámara
+        pixy.ccc.getBlocks();
+        if (pixy.ccc.numBlocks) {
+            for (int i = 0; i < pixy.ccc.numBlocks; i++) {
+                // Procesar los datos de los bloques
+            }
+        }
         vTaskDelay(1000 / portTICK_PERIOD_MS); // Temporización para simular trabajo
     }
 }
