@@ -2,6 +2,7 @@
 #include "Variables.h"
 #include "Motores.h"
 #include "Sensor_RGB.h"
+#include "Pixy2Cam.h"
 
 // Declaraciones de las funciones de las tareas de los estados
 void configTask(void *pvParameters);
@@ -9,14 +10,6 @@ void motorsTask(void *pvParameters);
 void sensColorTask(void *pvParameters);
 void gripperTask(void *pvParameters);
 void camTask(void *pvParameters);
-
-// Declaraciones de las funciones de manejo de estado
-void handleStateInicio();
-void handleStateCalibracion();
-void handleStateBuscarCajas();
-void handleStateAgarrarCaja();
-void handleStateBuscarMeta();
-void handleStateSoltarCaja();
 
 TaskHandle_t Task_Handle_1;
 TaskHandle_t Task_Handle_2;
@@ -44,7 +37,7 @@ void configTask(void *pvParameters) {
         else{
             currentState = STATE_INICIO;
         }
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // Temporización para simular trabajo
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
 
@@ -78,7 +71,7 @@ void motorsTask(void *pvParameters) {
             detenerse();
             break;
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS); // Temporización para simular trabajo
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -103,7 +96,7 @@ void sensColorTask(void *pvParameters) {
         default:
             break;
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS); // Temporización para simular trabajo
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -121,13 +114,28 @@ void camTask(void *pvParameters) {
 
     for (;;) {
         // Código de la cámara
-/*        pixy.ccc.getBlocks();
-        if (pixy.ccc.numBlocks) {
-            for (int i = 0; i < pixy.ccc.numBlocks; i++) {
-                // Procesar los datos de los bloques
-            }
+        float turn = pixyCheck();
+        
+        if (turn > -deadZone && turn < deadZone){
+            turn = 0;
         }
-*/
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // Temporización para simular trabajo
-    }
+        if (turn < 0){
+            motores = IZQUIERDA;
+        }
+        else if (turn > 0){
+            motores = DERECHA;
+        }
+        else{
+            motores = AVANZAR;
+        }
+
+        if (area > 50){
+            currentState = STATE_AGARRAR_CAJA;
+        }
+        else{
+            currentState = STATE_BUSCAR_CAJAS;
+        }
+
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }   
 }
